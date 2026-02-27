@@ -1,0 +1,92 @@
+export const AI_KEYWORDS = [
+  "ai",
+  "artificial intelligence",
+  "machine learning",
+  "deep learning",
+  "llm",
+  "large language model",
+  "gpt",
+  "claude",
+  "gemini",
+  "llama",
+  "neural network",
+  "transformer",
+  "openai",
+  "anthropic",
+  "hugging face",
+  "stable diffusion",
+  "computer vision",
+  "nlp",
+  "reinforcement learning",
+  "ai agent",
+  "autonomous agent",
+  "rag",
+  "fine-tuning",
+  "embedding",
+  "vector database",
+  "robotics",
+  "generative ai",
+  "foundation model",
+  "diffusion model",
+  "multimodal",
+];
+
+export const DEFAULT_SOURCES = [
+  {
+    name: "openai-blog",
+    type: "rss",
+    label: "OpenAI Blog",
+    url: "https://openai.com/blog/rss.xml",
+  },
+  {
+    name: "anthropic-blog",
+    type: "rss",
+    label: "Anthropic Blog",
+    url: "https://www.anthropic.com/rss.xml",
+  },
+  {
+    name: "huggingface-blog",
+    type: "rss",
+    label: "HuggingFace Blog",
+    url: "https://huggingface.co/blog/feed.xml",
+  },
+  {
+    name: "google-ai-blog",
+    type: "rss",
+    label: "Google AI Blog",
+    url: "https://blog.google/technology/ai/rss/",
+  },
+  {
+    name: "mit-tech-review",
+    type: "rss",
+    label: "MIT Technology Review",
+    url: "https://www.technologyreview.com/feed/",
+  },
+  {
+    name: "hackernews",
+    type: "api",
+    label: "HackerNews",
+    url: "https://hn.algolia.com/api/v1/search_by_date",
+  },
+  {
+    name: "arxiv",
+    type: "api",
+    label: "ArXiv",
+    url: "http://export.arxiv.org/api/query",
+  },
+];
+
+export const CATEGORIES = [
+  "AI Agents",
+  "Large Language Models",
+  "Computer Vision",
+  "Robotics",
+  "AI Tools & Products",
+  "AI Safety & Ethics",
+  "Industry News",
+  "Research Papers",
+  "Open Source",
+  "Tutorials & Guides",
+] as const;
+
+export type Category = (typeof CATEGORIES)[number];

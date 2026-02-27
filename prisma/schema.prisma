@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Source {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  type     String    // "rss" | "api"
+  label    String    // Human-readable name
+  url      String
+  enabled  Boolean   @default(true)
+  articles Article[]
+}
+
+model Article {
+  id          Int       @id @default(autoincrement())
+  externalId  String    @unique
+  title       String
+  url         String
+  content     String?
+  author      String?
+  summary     String?
+  category    String?
+  relevance   Int       @default(0)
+  tags        String?   // JSON array
+  source      Source    @relation(fields: [sourceId], references: [id])
+  sourceId    Int
+  processed   Boolean   @default(false)
+  publishedAt DateTime?
+  collectedAt DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([category])
+  @@index([processed])
+  @@index([relevance])
+  @@index([publishedAt])
+  @@index([sourceId])
+}
+
+model Digest {
+  id             Int      @id @default(autoincrement())
+  date           DateTime @unique
+  briefing       String
+  topInsights    String   // JSON array
+  trendingTopics String   // JSON array
+  createdAt      DateTime @default(now())
+}
