@@ -87,8 +87,11 @@ export default function CollectButton() {
       let totalProcessed = 0;
       let totalErrors = 0;
       let remaining = 1; // Start positive to enter loop
+      const MAX_BATCHES = 20; // Safety cap: 20 batches × 3 articles = 60 max
+      let batches = 0;
 
-      while (remaining > 0) {
+      while (remaining > 0 && batches < MAX_BATCHES) {
+        batches++;
         try {
           const res = await fetch("/api/process", { method: "POST" });
           const data = await res.json();
@@ -102,6 +105,8 @@ export default function CollectButton() {
             total: totalProcessed + totalErrors + remaining,
             done: remaining === 0,
           });
+          // If nothing was processed or errored, stop (avoid infinite loop)
+          if ((data.processed || 0) === 0 && (data.errors || 0) === 0) break;
         } catch {
           break;
         }
