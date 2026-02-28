@@ -11,7 +11,7 @@ export interface CollectionResult {
   error?: string;
 }
 
-async function ensureSources() {
+export async function ensureSources() {
   const count = await prisma.source.count();
   if (count > 0) return;
   for (const source of DEFAULT_SOURCES) {

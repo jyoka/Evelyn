@@ -59,7 +59,7 @@ export async function collectArxiv(): Promise<{
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), 5000);
     const res = await fetch(
       `https://export.arxiv.org/api/query?search_query=${query}`,
       { signal: controller.signal }

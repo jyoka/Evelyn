@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import crypto from "crypto";
 
 const parser = new Parser({
-  timeout: 8000,
+  timeout: 5000,
 });
 
 export async function collectRSS(): Promise<{

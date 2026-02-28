@@ -20,7 +20,7 @@ function isAIRelated(title: string): boolean {
   return AI_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
-function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response> {
+function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   return fetch(url, { signal: controller.signal }).finally(() =>

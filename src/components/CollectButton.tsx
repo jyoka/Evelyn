@@ -22,6 +22,7 @@ export default function CollectButton() {
   const [progress, setProgress] = useState<ProcessProgress | null>(null);
   const [collected, setCollected] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [collectLabel, setCollectLabel] = useState("Collecting articles");
 
   function getStepStatus(stepKey: string) {
     const order = STEPS.map((s) => s.key);
@@ -42,20 +43,23 @@ export default function CollectButton() {
     setError(null);
 
     try {
-      // Step 1: Collect
-      const collectRes = await fetch("/api/collect", { method: "POST" });
-      const collectData = await collectRes.json();
+      // Step 1: Collect (per-source to stay under Vercel 10s limit)
+      await fetch("/api/collect/seed", { method: "POST" });
 
-      if (!collectData.success) {
-        setError("Collection failed");
-        setStep("error");
-        return;
+      const sources = ["hackernews", "rss", "arxiv"];
+      let totalAdded = 0;
+
+      for (const source of sources) {
+        setCollectLabel(`Collecting ${source}...`);
+        try {
+          const res = await fetch(`/api/collect/${source}`, { method: "POST" });
+          const data = await res.json();
+          if (data.added) totalAdded += data.added;
+        } catch {
+          // Individual source failure is non-fatal
+        }
       }
 
-      const totalAdded = collectData.results.reduce(
-        (sum: number, r: { added: number }) => sum + r.added,
-        0
-      );
       setCollected(totalAdded);
 
       // Step 2: Process (streaming)
@@ -161,7 +165,7 @@ export default function CollectButton() {
                             : "text-muted/50"
                       }`}
                     >
-                      {s.label}
+                      {s.key === "collect" && step === "collect" ? collectLabel : s.label}
                     </span>
 
                     {/* Collect detail */}
