@@ -1,6 +1,8 @@
 import { collectHackerNews } from "./hackernews";
 import { collectRSS } from "./rss";
 import { collectArxiv } from "./arxiv";
+import { prisma } from "@/lib/db";
+import { DEFAULT_SOURCES } from "@/lib/constants";
 
 export interface CollectionResult {
   source: string;
@@ -9,7 +11,21 @@ export interface CollectionResult {
   error?: string;
 }
 
+async function ensureSources() {
+  const count = await prisma.source.count();
+  if (count > 0) return;
+  for (const source of DEFAULT_SOURCES) {
+    await prisma.source.upsert({
+      where: { name: source.name },
+      update: {},
+      create: source,
+    });
+  }
+}
+
 export async function collectAll(): Promise<CollectionResult[]> {
+  await ensureSources();
+
   const results: CollectionResult[] = [];
 
   const collectors = [
