@@ -23,6 +23,27 @@ export default function CollectButton() {
   const [collected, setCollected] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [collectLabel, setCollectLabel] = useState("Collecting articles");
+  const [cleaning, setCleaning] = useState(false);
+  const [cleanResult, setCleanResult] = useState<string | null>(null);
+
+  async function handleCleanup() {
+    if (!confirm("Delete all unprocessed articles from before today? This cannot be undone.")) return;
+    setCleaning(true);
+    setCleanResult(null);
+    try {
+      const res = await fetch("/api/collect/cleanup", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setCleanResult(`Deleted ${data.deleted} old articles`);
+      } else {
+        setCleanResult("Cleanup failed");
+      }
+    } catch {
+      setCleanResult("Cleanup failed");
+    } finally {
+      setCleaning(false);
+    }
+  }
 
   function getStepStatus(stepKey: string) {
     const order = STEPS.map((s) => s.key);
@@ -130,15 +151,28 @@ export default function CollectButton() {
 
   return (
     <div className="flex flex-col gap-3">
-      <button
-        onClick={handleCollect}
-        disabled={isActive && step !== "done" && step !== "error"}
-        className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-      >
-        {isActive && step !== "done" && step !== "error"
-          ? "Working..."
-          : "Collect & Process"}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleCollect}
+          disabled={isActive && step !== "done" && step !== "error"}
+          className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          {isActive && step !== "done" && step !== "error"
+            ? "Working..."
+            : "Collect & Process"}
+        </button>
+        <button
+          onClick={handleCleanup}
+          disabled={cleaning || (isActive && step !== "done" && step !== "error")}
+          className="px-3 py-2 bg-surface hover:bg-surface-hover border border-border text-muted hover:text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          title="Delete old unprocessed articles"
+        >
+          {cleaning ? "Cleaning..." : "Clean Old"}
+        </button>
+      </div>
+      {cleanResult && (
+        <p className="text-xs text-muted">{cleanResult}</p>
+      )}
 
       {isActive && (
         <div className="bg-surface border border-border rounded-xl p-4 min-w-[260px]">
