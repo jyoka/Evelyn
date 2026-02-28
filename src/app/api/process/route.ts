@@ -1,5 +1,7 @@
 import { processUnprocessedArticles } from "@/lib/ai/process";
 
+export const maxDuration = 60;
+
 export async function POST() {
   const encoder = new TextEncoder();
 

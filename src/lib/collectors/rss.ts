@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import crypto from "crypto";
 
 const parser = new Parser({
-  timeout: 10000,
+  timeout: 8000,
 });
 
 export async function collectRSS(): Promise<{
@@ -17,36 +17,41 @@ export async function collectRSS(): Promise<{
   let totalFound = 0;
   let totalAdded = 0;
 
-  for (const source of sources) {
-    try {
+  // Fetch all RSS feeds in parallel
+  const feedResults = await Promise.allSettled(
+    sources.map(async (source) => {
       const feed = await parser.parseURL(source.url);
+      return { source, items: feed.items };
+    })
+  );
 
-      for (const item of feed.items) {
-        const guid =
-          item.guid ||
-          item.link ||
-          crypto.createHash("md5").update(item.title || "").digest("hex");
+  for (const result of feedResults) {
+    if (result.status !== "fulfilled") continue;
+    const { source, items } = result.value;
 
-        try {
-          await prisma.article.create({
-            data: {
-              externalId: `rss:${source.name}:${guid}`,
-              title: item.title || "Untitled",
-              url: item.link || source.url,
-              content: item.contentSnippet || item.content || null,
-              author: item.creator || null,
-              sourceId: source.id,
-              publishedAt: item.pubDate ? new Date(item.pubDate) : null,
-            },
-          });
-          totalAdded++;
-        } catch {
-          // Duplicate — skip
-        }
-        totalFound++;
+    for (const item of items) {
+      const guid =
+        item.guid ||
+        item.link ||
+        crypto.createHash("md5").update(item.title || "").digest("hex");
+
+      try {
+        await prisma.article.create({
+          data: {
+            externalId: `rss:${source.name}:${guid}`,
+            title: item.title || "Untitled",
+            url: item.link || source.url,
+            content: item.contentSnippet || item.content || null,
+            author: item.creator || null,
+            sourceId: source.id,
+            publishedAt: item.pubDate ? new Date(item.pubDate) : null,
+          },
+        });
+        totalAdded++;
+      } catch {
+        // Duplicate — skip
       }
-    } catch (err) {
-      console.error(`RSS collect failed for ${source.name}:`, err);
+      totalFound++;
     }
   }
 

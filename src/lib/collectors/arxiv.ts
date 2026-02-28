@@ -58,9 +58,13 @@ export async function collectArxiv(): Promise<{
     "cat:cs.AI+OR+cat:cs.CL+OR+cat:cs.LG&sortBy=submittedDate&sortOrder=descending&max_results=30";
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(
-      `https://export.arxiv.org/api/query?search_query=${query}`
+      `https://export.arxiv.org/api/query?search_query=${query}`,
+      { signal: controller.signal }
     );
+    clearTimeout(timeout);
     if (!res.ok) return { found: 0, added: 0 };
 
     const xml = await res.text();

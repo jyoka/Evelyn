@@ -20,6 +20,14 @@ function isAIRelated(title: string): boolean {
   return AI_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
+function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { signal: controller.signal }).finally(() =>
+    clearTimeout(id)
+  );
+}
+
 export async function collectHackerNews(): Promise<{
   found: number;
   added: number;
@@ -30,19 +38,22 @@ export async function collectHackerNews(): Promise<{
   if (!source || !source.enabled) return { found: 0, added: 0 };
 
   const queries = ["AI agent", "LLM", "machine learning", "artificial intelligence"];
-  const allHits: HNHit[] = [];
 
-  for (const q of queries) {
-    try {
-      const res = await fetch(
+  // Fetch all queries in parallel with timeout
+  const queryResults = await Promise.allSettled(
+    queries.map(async (q) => {
+      const res = await fetchWithTimeout(
         `https://hn.algolia.com/api/v1/search_by_date?query=${encodeURIComponent(q)}&tags=story&hitsPerPage=20`
       );
-      if (!res.ok) continue;
+      if (!res.ok) return [];
       const data: HNResponse = await res.json();
-      allHits.push(...data.hits);
-    } catch {
-      // Skip failed queries
-    }
+      return data.hits;
+    })
+  );
+
+  const allHits: HNHit[] = [];
+  for (const r of queryResults) {
+    if (r.status === "fulfilled") allHits.push(...r.value);
   }
 
   // Deduplicate by objectID and filter
