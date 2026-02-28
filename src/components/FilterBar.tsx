@@ -23,7 +23,7 @@ export default function FilterBar({ sources }: FilterBarProps) {
   }
 
   return (
-    <div className="flex flex-wrap gap-3 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap gap-3 mb-6">
       <input
         type="text"
         placeholder="Search articles..."
@@ -33,7 +33,7 @@ export default function FilterBar({ sources }: FilterBarProps) {
             updateParam("search", e.currentTarget.value);
           }
         }}
-        className="px-3 py-2 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
+        className="px-3 py-2 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent sm:col-span-2 md:w-auto"
       />
 
       <select

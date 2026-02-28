@@ -31,7 +31,7 @@ export default function ArticleCard({
     : null;
 
   return (
-    <article className="bg-surface border border-border rounded-xl p-5 hover:border-accent/50 transition-colors group">
+    <article className="bg-surface border border-border rounded-xl p-4 sm:p-5 hover:border-accent/50 transition-colors group">
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-center gap-2 text-xs text-muted">
           <span>{source}</span>

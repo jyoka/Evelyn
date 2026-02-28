@@ -78,9 +78,9 @@ export default async function TrendsPage() {
   const uniqueTopics = [...new Set(allTrendingTopics)];
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Trends</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-white">Trends</h1>
         <p className="text-sm text-muted mt-1">
           AI landscape over the past 7 days · {articles.length} articles
           analyzed
@@ -117,7 +117,7 @@ export default async function TrendsPage() {
             <div className="bg-surface border border-border rounded-xl p-5 space-y-3">
               {categories.map((cat) => (
                 <div key={cat.name} className="flex items-center gap-3">
-                  <span className="text-sm text-foreground w-44 truncate">
+                  <span className="text-sm text-foreground w-28 sm:w-44 truncate flex-shrink-0">
                     {cat.name}
                   </span>
                   <div className="flex-1 bg-background rounded-full h-5 overflow-hidden">
@@ -144,7 +144,7 @@ export default async function TrendsPage() {
             <div className="bg-surface border border-border rounded-xl p-5 space-y-3">
               {sources.map((src) => (
                 <div key={src.name} className="flex items-center gap-3">
-                  <span className="text-sm text-foreground w-44 truncate">
+                  <span className="text-sm text-foreground w-28 sm:w-44 truncate flex-shrink-0">
                     {src.name}
                   </span>
                   <div className="flex-1 bg-background rounded-full h-5 overflow-hidden">

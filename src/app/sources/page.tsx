@@ -11,9 +11,9 @@ export default async function SourcesPage() {
   });
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Sources</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-white">Sources</h1>
         <p className="text-sm text-muted mt-1">
           {sources.length} configured sources
         </p>
@@ -23,7 +23,7 @@ export default async function SourcesPage() {
         {sources.map((source) => (
           <div
             key={source.id}
-            className="bg-surface border border-border rounded-xl p-5 flex items-center justify-between"
+            className="bg-surface border border-border rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
           >
             <div>
               <div className="flex items-center gap-3 mb-1">
@@ -49,11 +49,11 @@ export default async function SourcesPage() {
                   {source.enabled ? "Active" : "Disabled"}
                 </span>
               </div>
-              <p className="text-xs text-muted truncate max-w-md">
+              <p className="text-xs text-muted truncate max-w-[200px] sm:max-w-md">
                 {source.url}
               </p>
             </div>
-            <div className="text-right">
+            <div className="sm:text-right flex sm:block items-center gap-2">
               <p className="text-2xl font-bold text-white">
                 {source._count.articles}
               </p>
