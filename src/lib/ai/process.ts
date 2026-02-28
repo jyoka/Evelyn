@@ -18,6 +18,13 @@ interface ArticleWithSource {
   source: { label: string };
 }
 
+export interface ProcessProgress {
+  processed: number;
+  errors: number;
+  total: number;
+  done: boolean;
+}
+
 async function processOne(article: ArticleWithSource): Promise<void> {
   const result = await model.generateContent({
     systemInstruction:
@@ -73,10 +80,9 @@ Content: ${article.content?.slice(0, 2000) || "No content available — analyze 
   });
 }
 
-export async function processUnprocessedArticles(): Promise<{
-  processed: number;
-  errors: number;
-}> {
+export async function processUnprocessedArticles(
+  onProgress?: (progress: ProcessProgress) => void
+): Promise<{ processed: number; errors: number }> {
   const articles = await prisma.article.findMany({
     where: { processed: false },
     include: { source: true },
@@ -86,8 +92,10 @@ export async function processUnprocessedArticles(): Promise<{
 
   let processed = 0;
   let errors = 0;
+  const total = articles.length;
 
-  // Process in batches of BATCH_SIZE for concurrency
+  onProgress?.({ processed: 0, errors: 0, total, done: false });
+
   for (let i = 0; i < articles.length; i += BATCH_SIZE) {
     const batch = articles.slice(i, i + BATCH_SIZE);
     const results = await Promise.allSettled(batch.map(processOne));
@@ -100,7 +108,10 @@ export async function processUnprocessedArticles(): Promise<{
         errors++;
       }
     }
+
+    onProgress?.({ processed, errors, total, done: false });
   }
 
+  onProgress?.({ processed, errors, total, done: true });
   return { processed, errors };
 }
