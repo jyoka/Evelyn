@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
 
 const DEFAULT_SOURCES = [
   {
@@ -46,7 +47,18 @@ const DEFAULT_SOURCES = [
   },
 ];
 
-const prisma = new PrismaClient();
+function createPrisma(): PrismaClient {
+  if (process.env.TURSO_DATABASE_URL) {
+    const adapter = new PrismaLibSql({
+      url: process.env.TURSO_DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    });
+    return new PrismaClient({ adapter });
+  }
+  return new PrismaClient();
+}
+
+const prisma = createPrisma();
 
 async function main() {
   for (const source of DEFAULT_SOURCES) {
