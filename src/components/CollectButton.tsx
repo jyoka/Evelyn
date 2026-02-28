@@ -46,10 +46,10 @@ export default function CollectButton() {
       // Step 1: Collect (per-source to stay under Vercel 10s limit)
       await fetch("/api/collect/seed", { method: "POST" });
 
-      const sources = ["hackernews", "rss", "arxiv"];
       let totalAdded = 0;
 
-      for (const source of sources) {
+      // Collect HN and ArXiv
+      for (const source of ["hackernews", "arxiv"]) {
         setCollectLabel(`Collecting ${source}...`);
         try {
           const res = await fetch(`/api/collect/${source}`, { method: "POST" });
@@ -58,6 +58,26 @@ export default function CollectButton() {
         } catch {
           // Individual source failure is non-fatal
         }
+      }
+
+      // Collect RSS feeds one at a time (each feed is its own API call)
+      try {
+        const rssRes = await fetch("/api/collect/rss", { method: "POST" });
+        const rssData = await rssRes.json();
+        if (rssData.feeds) {
+          for (const feed of rssData.feeds) {
+            setCollectLabel(`Collecting ${feed.label}...`);
+            try {
+              const res = await fetch(`/api/collect/${feed.name}`, { method: "POST" });
+              const data = await res.json();
+              if (data.added) totalAdded += data.added;
+            } catch {
+              // Individual feed failure is non-fatal
+            }
+          }
+        }
+      } catch {
+        // RSS list fetch failed, skip
       }
 
       setCollected(totalAdded);
