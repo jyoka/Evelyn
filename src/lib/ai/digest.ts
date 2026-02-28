@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { anthropic } from "./client";
+import { model } from "./client";
 
 interface DigestResult {
   briefing: string;
@@ -33,13 +33,13 @@ export async function generateDigest(): Promise<DigestResult | null> {
     )
     .join("\n\n");
 
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-5-20250514",
-    max_tokens: 2048,
-    messages: [
+  const response = await model.generateContent({
+    contents: [
       {
         role: "user",
-        content: `You are an AI industry analyst writing a daily briefing. Based on these top AI/ML stories, produce a JSON response (no markdown fences):
+        parts: [
+          {
+            text: `You are an AI industry analyst writing a daily briefing. Based on these top AI/ML stories, produce a JSON response (no markdown fences):
 
 {
   "briefing": "A compelling 3-4 paragraph narrative that opens with the biggest story, connects themes, highlights what practitioners should watch, and ends with a forward-looking note. Write in a professional but engaging tone.",
@@ -50,12 +50,13 @@ export async function generateDigest(): Promise<DigestResult | null> {
 Today's top stories:
 
 ${articleList}`,
+          },
+        ],
       },
     ],
   });
 
-  const text =
-    message.content[0].type === "text" ? message.content[0].text : "";
+  const text = response.response.text();
   const jsonStr = text.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
   const result: DigestResult = JSON.parse(jsonStr);
 
