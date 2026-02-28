@@ -80,38 +80,48 @@ Content: ${article.content?.slice(0, 2000) || "No content available — analyze 
   });
 }
 
-export async function processUnprocessedArticles(
-  onProgress?: (progress: ProcessProgress) => void
-): Promise<{ processed: number; errors: number }> {
+/**
+ * Process a single batch of unprocessed articles.
+ * Returns the number processed, errors, and remaining unprocessed count.
+ * Designed to be called repeatedly from the client to stay under Vercel 10s limit.
+ */
+export async function processBatch(): Promise<{
+  processed: number;
+  errors: number;
+  remaining: number;
+}> {
   const articles = await prisma.article.findMany({
     where: { processed: false },
     include: { source: true },
     orderBy: { collectedAt: "desc" },
-    take: 50,
+    take: BATCH_SIZE,
   });
+
+  const totalUnprocessed = await prisma.article.count({
+    where: { processed: false },
+  });
+
+  if (articles.length === 0) {
+    return { processed: 0, errors: 0, remaining: 0 };
+  }
 
   let processed = 0;
   let errors = 0;
-  const total = articles.length;
 
-  onProgress?.({ processed: 0, errors: 0, total, done: false });
+  const results = await Promise.allSettled(articles.map(processOne));
 
-  for (let i = 0; i < articles.length; i += BATCH_SIZE) {
-    const batch = articles.slice(i, i + BATCH_SIZE);
-    const results = await Promise.allSettled(batch.map(processOne));
-
-    for (const r of results) {
-      if (r.status === "fulfilled") {
-        processed++;
-      } else {
-        console.error("Failed to process article:", r.reason);
-        errors++;
-      }
+  for (const r of results) {
+    if (r.status === "fulfilled") {
+      processed++;
+    } else {
+      console.error("Failed to process article:", r.reason);
+      errors++;
     }
-
-    onProgress?.({ processed, errors, total, done: false });
   }
 
-  onProgress?.({ processed, errors, total, done: true });
-  return { processed, errors };
+  return {
+    processed,
+    errors,
+    remaining: totalUnprocessed - processed - errors,
+  };
 }

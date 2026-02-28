@@ -1,29 +1,63 @@
 import { prisma } from "@/lib/db";
 import { safeJsonParse } from "@/lib/utils";
 import CollectButton from "@/components/CollectButton";
+import DigestNav from "@/components/DigestNav";
 import InsightCard from "@/components/InsightCard";
 import TrendingChip from "@/components/TrendingChip";
 import ArticleCard from "@/components/ArticleCard";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
+  const { date: dateParam } = await searchParams;
+
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const [digest, recentArticles, stats] = await Promise.all([
-    prisma.digest.findFirst({ orderBy: { date: "desc" } }),
-    prisma.article.findMany({
-      where: {
-        processed: true,
-        collectedAt: { gte: sevenDaysAgo },
-      },
-      include: { source: true },
-      orderBy: { relevance: "desc" },
-      take: 6,
-    }),
-    prisma.article.count(),
-  ]);
+  // If date param given, find that specific digest; otherwise find the latest
+  const digest = dateParam
+    ? await prisma.digest.findFirst({
+        where: { date: new Date(dateParam) },
+      })
+    : await prisma.digest.findFirst({ orderBy: { date: "desc" } });
+
+  // Find prev/next digests for navigation
+  const [prevDigest, nextDigest, recentArticles, stats, allDigestDates] =
+    await Promise.all([
+      digest
+        ? prisma.digest.findFirst({
+            where: { date: { lt: digest.date } },
+            orderBy: { date: "desc" },
+            select: { date: true },
+          })
+        : null,
+      digest
+        ? prisma.digest.findFirst({
+            where: { date: { gt: digest.date } },
+            orderBy: { date: "asc" },
+            select: { date: true },
+          })
+        : null,
+      prisma.article.findMany({
+        where: {
+          processed: true,
+          collectedAt: { gte: sevenDaysAgo },
+        },
+        include: { source: true },
+        orderBy: { relevance: "desc" },
+        take: 6,
+      }),
+      prisma.article.count(),
+      prisma.digest.findMany({
+        orderBy: { date: "desc" },
+        select: { date: true },
+        take: 30,
+      }),
+    ]);
 
   const topInsights: string[] = safeJsonParse(digest?.topInsights, []);
   const trendingTopics: string[] = safeJsonParse(digest?.trendingTopics, []);
@@ -49,9 +83,18 @@ export default async function HomePage() {
       {digest ? (
         <section className="mb-10">
           <div className="bg-surface border border-border rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">
-              Today&apos;s Briefing
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                {dateParam ? "Briefing" : "Today\u2019s Briefing"}{" "}
+                <span className="text-sm font-normal text-muted">
+                  {new Date(digest.date).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+              </h2>
+            </div>
             <div className="prose prose-invert prose-sm max-w-none">
               {digest.briefing.split("\n").map((p, i) => (
                 <p key={i} className="text-foreground/90 leading-relaxed mb-3">
@@ -59,6 +102,13 @@ export default async function HomePage() {
                 </p>
               ))}
             </div>
+            <DigestNav
+              prevDate={prevDigest?.date.toISOString().split("T")[0] ?? null}
+              nextDate={nextDigest?.date.toISOString().split("T")[0] ?? null}
+              allDates={allDigestDates.map(
+                (d) => d.date.toISOString().split("T")[0]
+              )}
+            />
           </div>
         </section>
       ) : (
@@ -72,7 +122,7 @@ export default async function HomePage() {
               and generate your first briefing.
             </p>
             <p className="text-muted text-xs">
-              Make sure to set your ANTHROPIC_API_KEY in .env for AI-powered
+              Make sure to set your GEMINI_API_KEY in .env for AI-powered
               summaries.
             </p>
           </div>

@@ -82,33 +82,28 @@ export default function CollectButton() {
 
       setCollected(totalAdded);
 
-      // Step 2: Process (streaming)
+      // Step 2: Process (in batches to stay under Vercel 10s limit)
       setStep("process");
-      const processRes = await fetch("/api/process", { method: "POST" });
+      let totalProcessed = 0;
+      let totalErrors = 0;
+      let remaining = 1; // Start positive to enter loop
 
-      if (processRes.body) {
-        const reader = processRes.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            if (line.trim()) {
-              try {
-                const p: ProcessProgress = JSON.parse(line);
-                setProgress(p);
-              } catch {
-                // skip malformed lines
-              }
-            }
-          }
+      while (remaining > 0) {
+        try {
+          const res = await fetch("/api/process", { method: "POST" });
+          const data = await res.json();
+          if (!data.success) break;
+          totalProcessed += data.processed || 0;
+          totalErrors += data.errors || 0;
+          remaining = data.remaining || 0;
+          setProgress({
+            processed: totalProcessed,
+            errors: totalErrors,
+            total: totalProcessed + totalErrors + remaining,
+            done: remaining === 0,
+          });
+        } catch {
+          break;
         }
       }
 
