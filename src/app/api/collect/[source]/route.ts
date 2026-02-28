@@ -24,6 +24,19 @@ export async function POST(
       return NextResponse.json({ success: true });
     }
 
+    // Manual cleanup: delete old unprocessed articles (only when user explicitly triggers)
+    if (source === "cleanup") {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const deleted = await prisma.article.deleteMany({
+        where: {
+          collectedAt: { lt: todayStart },
+          processed: false,
+        },
+      });
+      return NextResponse.json({ success: true, deleted: deleted.count });
+    }
+
     // "rss" returns list of RSS feed names for the client to call individually
     if (source === "rss") {
       const feeds = await prisma.source.findMany({
