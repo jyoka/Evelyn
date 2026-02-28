@@ -6,12 +6,19 @@ export default function CollectButton() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
+  const authHeaders: HeadersInit = process.env.NEXT_PUBLIC_API_SECRET
+    ? { Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_SECRET}` }
+    : {};
+
   async function handleCollect() {
     setLoading(true);
     setStatus("Collecting articles...");
 
     try {
-      const collectRes = await fetch("/api/collect", { method: "POST" });
+      const collectRes = await fetch("/api/collect", {
+        method: "POST",
+        headers: authHeaders,
+      });
       const collectData = await collectRes.json();
 
       if (!collectData.success) {
@@ -26,7 +33,10 @@ export default function CollectButton() {
       );
       setStatus(`Collected ${totalAdded} new articles. Processing...`);
 
-      const processRes = await fetch("/api/process", { method: "POST" });
+      const processRes = await fetch("/api/process", {
+        method: "POST",
+        headers: authHeaders,
+      });
       const processData = await processRes.json();
 
       if (processData.success) {
@@ -34,7 +44,7 @@ export default function CollectButton() {
           `Done! Processed ${processData.processed} articles. Generating digest...`
         );
 
-        await fetch("/api/digest", { method: "POST" });
+        await fetch("/api/digest", { method: "POST", headers: authHeaders });
         setStatus("Complete! Refresh to see updates.");
         setTimeout(() => window.location.reload(), 1500);
       } else {

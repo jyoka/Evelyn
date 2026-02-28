@@ -72,7 +72,7 @@ export const DEFAULT_SOURCES = [
     name: "arxiv",
     type: "api",
     label: "ArXiv",
-    url: "http://export.arxiv.org/api/query",
+    url: "https://export.arxiv.org/api/query",
   },
 ];
 

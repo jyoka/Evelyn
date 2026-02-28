@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { safeJsonParse } from "@/lib/utils";
 
 export async function GET() {
   // Get category distribution from recent processed articles
@@ -39,15 +40,9 @@ export async function GET() {
   // Extract trending tags
   const tagMap: Record<string, number> = {};
   for (const a of articles) {
-    if (a.tags) {
-      try {
-        const tags: string[] = JSON.parse(a.tags);
-        for (const tag of tags) {
-          tagMap[tag] = (tagMap[tag] || 0) + 1;
-        }
-      } catch {
-        // skip
-      }
+    const tags = safeJsonParse<string[]>(a.tags, []);
+    for (const tag of tags) {
+      tagMap[tag] = (tagMap[tag] || 0) + 1;
     }
   }
   const trendingTags = Object.entries(tagMap)
@@ -68,7 +63,7 @@ export async function GET() {
     trendingTags,
     digests: digests.map((d) => ({
       date: d.date,
-      trendingTopics: JSON.parse(d.trendingTopics),
+      trendingTopics: safeJsonParse(d.trendingTopics, []),
     })),
   });
 }

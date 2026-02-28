@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { safeJsonParse } from "@/lib/utils";
 import CollectButton from "@/components/CollectButton";
 import InsightCard from "@/components/InsightCard";
 import TrendingChip from "@/components/TrendingChip";
@@ -7,10 +8,16 @@ import ArticleCard from "@/components/ArticleCard";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
   const [digest, recentArticles, stats] = await Promise.all([
     prisma.digest.findFirst({ orderBy: { date: "desc" } }),
     prisma.article.findMany({
-      where: { processed: true },
+      where: {
+        processed: true,
+        collectedAt: { gte: sevenDaysAgo },
+      },
       include: { source: true },
       orderBy: { relevance: "desc" },
       take: 6,
@@ -18,24 +25,8 @@ export default async function HomePage() {
     prisma.article.count(),
   ]);
 
-  const topInsights: string[] = digest
-    ? (() => {
-        try {
-          return JSON.parse(digest.topInsights);
-        } catch {
-          return [];
-        }
-      })()
-    : [];
-  const trendingTopics: string[] = digest
-    ? (() => {
-        try {
-          return JSON.parse(digest.trendingTopics);
-        } catch {
-          return [];
-        }
-      })()
-    : [];
+  const topInsights: string[] = safeJsonParse(digest?.topInsights, []);
+  const trendingTopics: string[] = safeJsonParse(digest?.trendingTopics, []);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">

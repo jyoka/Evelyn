@@ -8,8 +8,7 @@ interface DigestResult {
 }
 
 export async function generateDigest(): Promise<DigestResult | null> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = new Date(new Date().toISOString().split("T")[0]);
 
   // Get top processed articles from the last 3 days
   const threeDaysAgo = new Date(today);

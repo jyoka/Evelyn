@@ -59,7 +59,7 @@ export async function collectArxiv(): Promise<{
 
   try {
     const res = await fetch(
-      `http://export.arxiv.org/api/query?search_query=${query}`
+      `https://export.arxiv.org/api/query?search_query=${query}`
     );
     if (!res.ok) return { found: 0, added: 0 };
 
