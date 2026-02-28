@@ -105,13 +105,13 @@ export async function processBatch(): Promise<{
   errors: number;
   remaining: number;
 }> {
-  // Only process articles from the last 3 days
-  const threeDaysAgo = new Date();
-  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  // Only process articles collected today
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
 
   const recentFilter = {
     processed: false,
-    collectedAt: { gte: threeDaysAgo },
+    collectedAt: { gte: todayStart },
   };
 
   const [articles, remaining] = await Promise.all([
